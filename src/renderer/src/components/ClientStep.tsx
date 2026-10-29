@@ -1,5 +1,10 @@
-import { User, Phone, Mail, MapPin, MoveRight, MoveLeft } from 'lucide-react'
+import { User, Phone, Mail, MapPin, MoveRight } from 'lucide-react'
 import { Alert, Box, Button, InputAdornment, TextField, Typography } from "@mui/material";
+import { useBudgetStore } from '@renderer/store/budgetStore';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { clientSchema, ClientForm } from '@renderer/schemas/clientSchema';
+import { maskCpfCnpj, maskPhone } from '@renderer/utils/masks';
 
 const labelSx = { display: 'block', mb: 1, fontWeight: 600 }
 
@@ -13,9 +18,27 @@ const buttonSx = {
     textTransform: 'none',
 }
 
-export function ClientStep(): React.JSX.Element {
+type ClientStepProps = {
+    onNext: () => void
+}
+
+export function ClientStep({ onNext }: ClientStepProps): React.JSX.Element {
+    const client = useBudgetStore((state) => state.client)
+    const setClient = useBudgetStore((state) => state.setClient)
+
+    const { register, handleSubmit, formState: { errors } } = useForm<ClientForm>({
+        resolver: zodResolver(clientSchema),
+        defaultValues: client,
+    })
+
+    const onSubmit = (data: ClientForm): void => {
+        setClient(data)
+        onNext()
+    }
+
     return (
-        <Box sx={{ backgroundColor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider', p: 3 }}>
+        <Box component="form" noValidate onSubmit={handleSubmit(onSubmit)}
+            sx={{ backgroundColor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider', p: 3 }}>
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
                 <User height={40} width={40} />
 
@@ -41,14 +64,34 @@ export function ClientStep(): React.JSX.Element {
                     <Typography component="label" htmlFor="client-name" sx={labelSx}>
                         Nome do Cliente
                     </Typography>
-                    <TextField id="client-name" fullWidth placeholder="Digite o nome do cliente" sx={fieldSx} />
+                    <TextField
+                        id="client-name"
+                        fullWidth
+                        placeholder="Digite o nome do cliente"
+                        sx={fieldSx}
+                        {...register('name')}
+                        error={!!errors.name}
+                        helperText={errors.name?.message}
+                    />
                 </Box>
 
                 <Box>
                     <Typography component="label" htmlFor="client-document" sx={labelSx}>
                         CPF/CNPJ
                     </Typography>
-                    <TextField id="client-document" fullWidth placeholder="Digite o CPF ou CNPJ" sx={fieldSx} />
+                    <TextField
+                        id="client-document"
+                        fullWidth
+                        placeholder="CPF ou CNPJ (opcional)"
+                        sx={fieldSx}
+                        {...register('cpfCnpj', {
+                            onChange: (e) => {
+                                e.target.value = maskCpfCnpj(e.target.value)
+                            },
+                        })}
+                        error={!!errors.cpfCnpj}
+                        helperText={errors.cpfCnpj?.message}
+                    />
                 </Box>
 
                 <Box>
@@ -60,6 +103,13 @@ export function ClientStep(): React.JSX.Element {
                         fullWidth
                         placeholder="(67) 00000-0000"
                         sx={fieldSx}
+                        {...register('telephone', {
+                            onChange: (e) => {
+                                e.target.value = maskPhone(e.target.value)
+                            },
+                        })}
+                        error={!!errors.telephone}
+                        helperText={errors.telephone?.message}
                         slotProps={{
                             input: {
                                 startAdornment: (
@@ -79,8 +129,11 @@ export function ClientStep(): React.JSX.Element {
                     <TextField
                         id="client-email"
                         fullWidth
-                        placeholder="contato@exemplo.com"
+                        placeholder="contato@exemplo.com (opcional)"
                         sx={fieldSx}
+                        {...register('email')}
+                        error={!!errors.email}
+                        helperText={errors.email?.message}
                         slotProps={{
                             input: {
                                 startAdornment: (
@@ -103,6 +156,7 @@ export function ClientStep(): React.JSX.Element {
                     fullWidth
                     placeholder="Rua, número, bairro, cidade - (opcional)"
                     sx={fieldSx}
+                    {...register('address')}
                     slotProps={{
                         input: {
                             startAdornment: (
@@ -127,16 +181,8 @@ export function ClientStep(): React.JSX.Element {
                 Esses dados serão exibidos no PDF do orçamento.
             </Alert>
 
-            <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Button
-                    variant="outlined"
-                    startIcon={<MoveLeft />}
-                    sx={{ ...buttonSx, color: 'text.secondary', borderColor: 'text.secondary' }}
-                >
-                    Sair
-                </Button>
-
-                <Button variant="contained" endIcon={<MoveRight />} sx={buttonSx}>
+            <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>         
+                <Button type="submit" variant="contained" endIcon={<MoveRight />} sx={buttonSx}>
                     Continuar
                 </Button>
             </Box>

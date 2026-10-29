@@ -1,7 +1,10 @@
 import { Box, Paper, Typography } from '@mui/material'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
+import { useBudgetStore } from '@renderer/store/budgetStore'
 
 export function PreviewPanel(): React.JSX.Element {
+  const client = useBudgetStore((state) => state.client)
+
   return (
     <Paper
       elevation={0}
@@ -45,9 +48,17 @@ export function PreviewPanel(): React.JSX.Element {
             border: '1px solid',
             borderColor: 'divider',
             boxShadow: '0 4px 20px rgba(16, 24, 40, 0.10)',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 2
           }}
         >
+          {client.name}
+
+          {client.cpfCnpj}
         
         </Box>
       </Box>
